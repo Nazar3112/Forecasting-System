@@ -1,0 +1,3 @@
+# data/
+# Folder ini untuk menyimpan file CSV dataset opsional secara lokal.
+# Berkas CSV juga dapat diunggah langsung melalui antarmuka Streamlit.
