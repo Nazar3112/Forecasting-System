@@ -25,13 +25,13 @@ from src.config import (
     COLOR_RESIDUAL,
 )
 
-# Airtable design palette overrides for charts
-# (selaras dengan DESIGN-airtable.md signature card colors)
-_C_ACTUAL   = "#181d26"   # ink — data aktual historis
-_C_PROPHET  = "#d9a441"   # signature-mustard — Prophet tunggal
-_C_HYBRID   = "#0a6b2d"   # hijau gelap selaras signature-forest — Hybrid
-_C_FUTURE   = "#aa2d00"   # signature-coral — proyeksi masa depan
-_C_RESIDUAL = "#254fad"   # info blue — galat/residual
+# Binance Design System palette overrides for charts
+# (selaras dengan DESIGN-binance.md dark-theme tokens)
+_C_ACTUAL   = "#eaecef"   # body on dark — data aktual historis
+_C_PROPHET  = "#929aa5"   # muted-strong — Prophet tunggal
+_C_HYBRID   = "#0ecb81"   # trading-up green — Prediksi Hibrida
+_C_FUTURE   = "#fcd535"   # Binance yellow primary — proyeksi masa depan
+_C_RESIDUAL = "#3b82f6"   # info blue — galat/residual
 
 
 logger = logging.getLogger(__name__)
@@ -207,11 +207,11 @@ class DashboardVisualizer:
             fig.add_vrect(
                 x0=test_results["ds"].min(),
                 x1=test_results["ds"].max(),
-                fillcolor="rgba(24, 29, 38, 0.04)",
+                fillcolor="rgba(252,213,53,0.06)",
                 line_width=0,
                 annotation_text="Zona Uji",
                 annotation_position="top left",
-                annotation=dict(font=dict(size=11, color="#41454d", family="Inter, sans-serif")),
+                annotation=dict(font=dict(size=11, color="#707a8a", family="Inter, sans-serif")),
             )
 
         # ── Garis Pemisah: Historis / Future ─────────────────────────
@@ -220,32 +220,36 @@ class DashboardVisualizer:
             fig.add_vline(
                 x=split_date,
                 line_dash="dot",
-                line_color="#9297a0",
+                line_color="#2b3139",
                 annotation_text="Mulai Proyeksi",
                 annotation_position="top right",
-                annotation=dict(font=dict(size=11, color="#41454d", family="Inter, sans-serif")),
+                annotation=dict(font=dict(size=11, color="#707a8a", family="Inter, sans-serif")),
             )
 
         # ── Layout ───────────────────────────────────────────────────
         subtitle = f"Divisi/Kategori: {category_label}" if category_label else ""
         fig.update_layout(
             title=dict(
-                text=f"<b>{title}</b>" + (f"<br><span style='font-size:12px;color:#41454d;font-weight:400'>{subtitle}</span>" if subtitle else ""),
-                font=dict(size=16, color="#181d26", family="Inter, sans-serif"),
+                text=f"<b>{title}</b>" + (f"<br><span style='font-size:12px;color:#707a8a;font-weight:400'>{subtitle}</span>" if subtitle else ""),
+                font=dict(size=16, color="#ffffff", family="Inter, sans-serif"),
             ),
             xaxis=dict(
-                title=f"Periode ({freq_label})",
-                gridcolor="#dddddd",
-                linecolor="#dddddd",
-                tickfont=dict(family="Inter, sans-serif", size=11, color="#41454d"),
-                titlefont=dict(family="Inter, sans-serif", size=12, color="#181d26"),
+                title=dict(
+                    text=f"Periode ({freq_label})",
+                    font=dict(family="Inter, sans-serif", size=12, color="#eaecef"),
+                ),
+                gridcolor="#2b3139",
+                linecolor="#2b3139",
+                tickfont=dict(family="Inter, sans-serif", size=11, color="#707a8a"),
             ),
             yaxis=dict(
-                title="Kuantitas Penjualan (unit)",
-                gridcolor="#dddddd",
-                linecolor="#dddddd",
-                tickfont=dict(family="Inter, sans-serif", size=11, color="#41454d"),
-                titlefont=dict(family="Inter, sans-serif", size=12, color="#181d26"),
+                title=dict(
+                    text="Kuantitas Penjualan (unit)",
+                    font=dict(family="Inter, sans-serif", size=12, color="#eaecef"),
+                ),
+                gridcolor="#2b3139",
+                linecolor="#2b3139",
+                tickfont=dict(family="Inter, sans-serif", size=11, color="#707a8a"),
             ),
             legend=dict(
                 orientation="h",
@@ -253,16 +257,16 @@ class DashboardVisualizer:
                 y=1.02,
                 xanchor="right",
                 x=1,
-                font=dict(family="Inter, sans-serif", size=12, color="#181d26"),
-                bgcolor="rgba(255,255,255,0.9)",
-                bordercolor="#dddddd",
+                font=dict(family="Inter, sans-serif", size=12, color="#eaecef"),
+                bgcolor="rgba(30,35,41,0.9)",
+                bordercolor="#2b3139",
                 borderwidth=1,
             ),
             hovermode="x unified",
             height=480,
-            paper_bgcolor="#ffffff",
-            plot_bgcolor="#f8fafc",
-            font=dict(family="Inter, system-ui, sans-serif", size=12),
+            paper_bgcolor="#0b0e11",
+            plot_bgcolor="#1e2329",
+            font=dict(family="Inter, system-ui, sans-serif", size=12, color="#eaecef"),
             margin=dict(l=40, r=20, t=80, b=40),
         )
         return fig
@@ -308,37 +312,41 @@ class DashboardVisualizer:
         subtitle = f"Kategori: {category_label}" if category_label else ""
         fig.update_layout(
             title=dict(
-                text=f"<b>Analisis Galat Absolut pada Data Uji</b>" + (f"<br><span style='font-size:12px;color:#41454d;font-weight:400'>{subtitle}</span>" if subtitle else ""),
-                font=dict(size=15, color="#181d26", family="Inter, sans-serif"),
+                text=f"<b>Analisis Galat Absolut pada Data Uji</b>" + (f"<br><span style='font-size:12px;color:#707a8a;font-weight:400'>{subtitle}</span>" if subtitle else ""),
+                font=dict(size=15, color="#ffffff", family="Inter, sans-serif"),
             ),
             xaxis=dict(
-                title="Periode",
-                gridcolor="#dddddd",
-                linecolor="#dddddd",
-                tickfont=dict(family="Inter, sans-serif", size=11, color="#41454d"),
-                titlefont=dict(family="Inter, sans-serif", size=12, color="#181d26"),
+                title=dict(
+                    text="Periode",
+                    font=dict(family="Inter, sans-serif", size=12, color="#eaecef"),
+                ),
+                gridcolor="#2b3139",
+                linecolor="#2b3139",
+                tickfont=dict(family="Inter, sans-serif", size=11, color="#707a8a"),
             ),
             yaxis=dict(
-                title="Galat Absolut (unit)",
-                gridcolor="#dddddd",
-                linecolor="#dddddd",
-                tickfont=dict(family="Inter, sans-serif", size=11, color="#41454d"),
-                titlefont=dict(family="Inter, sans-serif", size=12, color="#181d26"),
+                title=dict(
+                    text="Galat Absolut (unit)",
+                    font=dict(family="Inter, sans-serif", size=12, color="#eaecef"),
+                ),
+                gridcolor="#2b3139",
+                linecolor="#2b3139",
+                tickfont=dict(family="Inter, sans-serif", size=11, color="#707a8a"),
             ),
             barmode="group",
             height=360,
-            paper_bgcolor="#ffffff",
-            plot_bgcolor="#f8fafc",
-            font=dict(family="Inter, system-ui, sans-serif", size=12),
+            paper_bgcolor="#0b0e11",
+            plot_bgcolor="#1e2329",
+            font=dict(family="Inter, system-ui, sans-serif", size=12, color="#eaecef"),
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
                 y=1.02,
                 xanchor="right",
                 x=1,
-                font=dict(family="Inter, sans-serif", size=12, color="#181d26"),
-                bgcolor="rgba(255,255,255,0.9)",
-                bordercolor="#dddddd",
+                font=dict(family="Inter, sans-serif", size=12, color="#eaecef"),
+                bgcolor="rgba(30,35,41,0.9)",
+                bordercolor="#2b3139",
                 borderwidth=1,
             ),
             hovermode="x unified",
@@ -373,23 +381,25 @@ class DashboardVisualizer:
         fig.update_layout(
             title=dict(
                 text="<b>Pentingnya Fitur LightGBM (Feature Importance)</b>",
-                font=dict(size=15, color="#181d26", family="Inter, sans-serif"),
+                font=dict(size=15, color="#ffffff", family="Inter, sans-serif"),
             ),
             xaxis=dict(
-                title="Importance (Gain)",
-                gridcolor="#dddddd",
-                linecolor="#dddddd",
-                tickfont=dict(family="Inter, sans-serif", size=11, color="#41454d"),
-                titlefont=dict(family="Inter, sans-serif", size=12, color="#181d26"),
+                title=dict(
+                    text="Importance (Gain)",
+                    font=dict(family="Inter, sans-serif", size=12, color="#eaecef"),
+                ),
+                gridcolor="#2b3139",
+                linecolor="#2b3139",
+                tickfont=dict(family="Inter, sans-serif", size=11, color="#707a8a"),
             ),
             yaxis=dict(
                 title="Fitur",
-                tickfont=dict(family="Inter, sans-serif", size=11, color="#41454d"),
+                tickfont=dict(family="Inter, sans-serif", size=11, color="#707a8a"),
             ),
             height=max(300, top_n * 25),
-            paper_bgcolor="#ffffff",
-            plot_bgcolor="#f8fafc",
-            font=dict(family="Inter, system-ui, sans-serif", size=12),
+            paper_bgcolor="#0b0e11",
+            plot_bgcolor="#1e2329",
+            font=dict(family="Inter, system-ui, sans-serif", size=12, color="#eaecef"),
             margin=dict(l=150, r=20, t=60, b=40),
         )
         return fig

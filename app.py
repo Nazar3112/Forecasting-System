@@ -5,11 +5,11 @@ StreamlitDashboard – Pengendali Utama Antarmuka Pengguna
 Sistem Prediksi Tren Penjualan Retail Berbasis Kategori
 Model Hibrida Prophet + LightGBM (PT. Indomarco Prismatama)
 
-Desain: Airtable Design System (DESIGN-airtable.md)
-  – White canvas, dark-ink editorial, signature surface cards
-  – Inter Display typography (pengganti Haas Grotesk)
-  – Near-black primary CTA (#181d26), hairline secondary
-  – Generous whitespace (96px section rhythm)
+Desain: Binance Design System (DESIGN-binance.md)
+  – Near-black canvas (#0b0e11), Binance Yellow primary (#fcd535)
+  – Inter typography (pengganti BinanceNova), JetBrains Mono untuk angka
+  – Yellow CTA, dark surface cards (#1e2329), trading green/red semantics
+  – Dense 80px section rhythm sesuai platform trading finansial
   – Stateless In-Memory, tanpa DB, tanpa login
 """
 
@@ -49,41 +49,43 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------------------------
-# AIRTABLE DESIGN SYSTEM — CSS Injection
-# Referensi: DESIGN-airtable.md
+# BINANCE DESIGN SYSTEM — CSS Injection
+# Referensi: DESIGN-binance.md
 # ---------------------------------------------------------------------------
-AIRTABLE_CSS = """
+BINANCE_CSS = """
 <style>
-/* ─── Google Font: Inter Display ─────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..700;1,14..32,300..700&display=swap');
+/* ─── Google Fonts: Inter + JetBrains Mono ───────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
-/* ─── Design Tokens ──────────────────────────────────────────────────────── */
+/* ─── Design Tokens (Binance) ────────────────────────────────────────────── */
 :root {
-  --ink:              #181d26;
-  --body:             #333840;
-  --muted:            #41454d;
-  --hairline:         #dddddd;
-  --canvas:           #ffffff;
-  --surface-soft:     #f8fafc;
-  --surface-strong:   #e0e2e6;
-  --surface-dark:     #181d26;
-  --sig-coral:        #aa2d00;
-  --sig-forest:       #0a2e0e;
-  --sig-cream:        #f5e9d4;
-  --sig-peach:        #fcab79;
-  --sig-mint:         #a8d8c4;
-  --sig-yellow:       #f4d35e;
-  --link:             #1b61c9;
-  --success:          #006400;
-  --r-sm:             6px;
-  --r-md:             10px;
-  --r-lg:             12px;
+  --primary:              #fcd535;
+  --primary-active:       #f0b90b;
+  --primary-disabled:     #3a3a1f;
+  --on-primary:           #181a20;
+  --on-dark:              #ffffff;
+  --body:                 #eaecef;
+  --muted:                #707a8a;
+  --muted-strong:         #929aa5;
+  --canvas-dark:          #0b0e11;
+  --surface-card:         #1e2329;
+  --surface-elevated:     #2b3139;
+  --hairline:             #2b3139;
+  --trading-up:           #0ecb81;
+  --trading-down:         #f6465d;
+  --info:                 #3b82f6;
+  --r-xs:                 2px;
+  --r-sm:                 4px;
+  --r-md:                 6px;
+  --r-lg:                 8px;
+  --r-xl:                 12px;
+  --r-pill:               9999px;
 }
 
 /* ─── Global Reset ───────────────────────────────────────────────────────── */
 html, body, [class*="css"], .stApp {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-  background-color: var(--canvas) !important;
+  background-color: var(--canvas-dark) !important;
   color: var(--body) !important;
   -webkit-font-smoothing: antialiased;
 }
@@ -94,38 +96,38 @@ html, body, [class*="css"], .stApp {
   max-width: 1280px !important;
 }
 
-/* ─── Headings (Airtable: weight 400–500, never bold for its own sake) ───── */
+/* ─── Headings (Binance: 600–700, authoritative trading platform) ─────────── */
 h1 {
   font-size: 32px !important;
-  font-weight: 500 !important;
+  font-weight: 600 !important;
   line-height: 1.2 !important;
-  color: var(--ink) !important;
+  color: var(--on-dark) !important;
   letter-spacing: 0 !important;
   margin-bottom: 4px !important;
 }
 h2 {
   font-size: 24px !important;
-  font-weight: 400 !important;
-  line-height: 1.35 !important;
-  color: var(--ink) !important;
-  letter-spacing: 0.12px !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  color: var(--on-dark) !important;
+  letter-spacing: 0 !important;
   margin-top: 2rem !important;
 }
 h3 {
-  font-size: 18px !important;
-  font-weight: 500 !important;
-  line-height: 1.4 !important;
-  color: var(--ink) !important;
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  color: var(--on-dark) !important;
   margin-top: 1.5rem !important;
 }
 p, li {
   font-size: 14px !important;
   font-weight: 400 !important;
-  line-height: 1.6 !important;
+  line-height: 1.5 !important;
   color: var(--body) !important;
 }
 small, .caption, [data-testid="stCaptionContainer"] {
-  font-size: 13px !important;
+  font-size: 12px !important;
   color: var(--muted) !important;
 }
 
@@ -138,7 +140,7 @@ hr {
 
 /* ─── SIDEBAR ─────────────────────────────────────────────────────────────── */
 [data-testid="stSidebar"] {
-  background-color: var(--surface-soft) !important;
+  background-color: var(--surface-card) !important;
   border-right: 1px solid var(--hairline) !important;
 }
 [data-testid="stSidebar"] > div:first-child {
@@ -147,67 +149,63 @@ hr {
 [data-testid="stSidebar"] h1,
 [data-testid="stSidebar"] h2,
 [data-testid="stSidebar"] h3 {
-  font-size: 13px !important;
+  font-size: 11px !important;
   font-weight: 600 !important;
-  letter-spacing: 0.08em !important;
+  letter-spacing: 0.1em !important;
   text-transform: uppercase !important;
   color: var(--muted) !important;
   margin-top: 1.5rem !important;
   margin-bottom: 0.5rem !important;
 }
-/* Sidebar brand mark */
-[data-testid="stSidebar"] .sidebar-brand {
-  font-size: 15px !important;
-  font-weight: 500 !important;
-  color: var(--ink) !important;
-  letter-spacing: 0 !important;
-  text-transform: none !important;
-  margin-bottom: 0.25rem !important;
-}
 
-/* ─── PRIMARY BUTTON: near-black pill (Airtable signature) ──────────────── */
+/* ─── PRIMARY BUTTON: Binance Yellow (#fcd535) + black text ─────────────── */
 .stButton > button[kind="primary"],
 .stDownloadButton > button[kind="primary"],
 button[data-testid="baseButton-primary"] {
-  background-color: var(--ink) !important;
-  color: #ffffff !important;
+  background-color: var(--primary) !important;
+  color: var(--on-primary) !important;
   border: none !important;
-  border-radius: var(--r-lg) !important;
-  font-size: 15px !important;
-  font-weight: 500 !important;
-  padding: 14px 24px !important;
+  border-radius: var(--r-md) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
   letter-spacing: 0 !important;
-  box-shadow: 0 1px 3px rgba(24,29,38,0.18), 0 0 0 0px transparent !important;
-  transition: background 0.15s ease, box-shadow 0.15s ease !important;
-  line-height: 1.4 !important;
+  box-shadow: none !important;
+  transition: background 0.15s ease !important;
+  line-height: 1 !important;
+}
+.stButton > button[kind="primary"]:hover,
+.stDownloadButton > button[kind="primary"]:hover,
+button[data-testid="baseButton-primary"]:hover {
+  background-color: var(--primary-active) !important;
 }
 .stButton > button[kind="primary"]:active,
 .stDownloadButton > button[kind="primary"]:active,
 button[data-testid="baseButton-primary"]:active {
-  background-color: #0d1218 !important;
+  background-color: var(--primary-active) !important;
 }
 .stButton > button[kind="primary"]:disabled,
 button[data-testid="baseButton-primary"]:disabled {
-  background-color: var(--surface-strong) !important;
+  background-color: var(--primary-disabled) !important;
   color: var(--muted) !important;
 }
 
-/* ─── SECONDARY BUTTON: white canvas + hairline ──────────────────────────── */
+/* ─── SECONDARY BUTTON: dark surface card + white text ──────────────────── */
 .stButton > button[kind="secondary"],
 button[data-testid="baseButton-secondary"] {
-  background-color: var(--canvas) !important;
-  color: var(--ink) !important;
+  background-color: var(--surface-card) !important;
+  color: var(--on-dark) !important;
   border: 1px solid var(--hairline) !important;
-  border-radius: var(--r-lg) !important;
-  font-size: 15px !important;
-  font-weight: 500 !important;
-  padding: 14px 24px !important;
+  border-radius: var(--r-md) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
 }
-.stButton > button[kind="secondary"]:active {
-  border-color: var(--ink) !important;
+.stButton > button[kind="secondary"]:hover {
+  border-color: var(--muted-strong) !important;
 }
 
-/* ─── TABS — Airtable editorial nav ─────────────────────────────────────── */
+/* ─── TABS — Binance nav style (yellow active underline) ────────────────── */
 [data-testid="stTabs"] [role="tablist"] {
   border-bottom: 1px solid var(--hairline) !important;
   background: transparent !important;
@@ -215,7 +213,7 @@ button[data-testid="baseButton-secondary"] {
 }
 [data-testid="stTabs"] button[role="tab"] {
   font-size: 14px !important;
-  font-weight: 400 !important;
+  font-weight: 500 !important;
   color: var(--muted) !important;
   border: none !important;
   border-bottom: 2px solid transparent !important;
@@ -226,37 +224,38 @@ button[data-testid="baseButton-secondary"] {
   transition: color 0.15s ease, border-color 0.15s ease !important;
 }
 [data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
-  font-weight: 500 !important;
-  color: var(--ink) !important;
-  border-bottom: 2px solid var(--ink) !important;
+  font-weight: 600 !important;
+  color: var(--primary) !important;
+  border-bottom: 2px solid var(--primary) !important;
 }
 [data-testid="stTabs"] [data-testid="stTabPanel"] {
   padding-top: 1.75rem !important;
 }
 
-/* ─── METRIC CARDS — demo-grid-card style ────────────────────────────────── */
+/* ─── METRIC CARDS — Binance dark surface card style ────────────────────── */
 [data-testid="stMetric"] {
-  background: var(--canvas) !important;
+  background: var(--surface-card) !important;
   border: 1px solid var(--hairline) !important;
-  border-radius: var(--r-md) !important;
+  border-radius: var(--r-xl) !important;
   padding: 20px 20px 16px !important;
 }
 [data-testid="stMetricLabel"] {
-  font-size: 12px !important;
-  font-weight: 500 !important;
-  letter-spacing: 0.06em !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.1em !important;
   text-transform: uppercase !important;
   color: var(--muted) !important;
 }
 [data-testid="stMetricValue"] {
   font-size: 26px !important;
-  font-weight: 400 !important;
-  color: var(--ink) !important;
+  font-weight: 700 !important;
+  color: var(--primary) !important;
   line-height: 1.1 !important;
+  font-family: 'JetBrains Mono', monospace !important;
 }
 [data-testid="stMetricDelta"] {
   font-size: 13px !important;
-  font-weight: 400 !important;
+  font-weight: 500 !important;
 }
 
 /* ─── SELECTBOX & RADIO ───────────────────────────────────────────────────── */
@@ -266,30 +265,31 @@ button[data-testid="baseButton-secondary"] {
   color: var(--body) !important;
 }
 [data-testid="stSelectbox"] > div > div:first-child {
-  background: var(--canvas) !important;
+  background: var(--surface-elevated) !important;
   border: 1px solid var(--hairline) !important;
-  border-radius: var(--r-sm) !important;
+  border-radius: var(--r-lg) !important;
   padding: 10px 14px !important;
   font-size: 14px !important;
-  min-height: 44px !important;
+  min-height: 40px !important;
+  color: var(--body) !important;
 }
 [data-testid="stSelectbox"] > div > div:first-child:focus-within {
-  border-color: #458fff !important;
-  box-shadow: 0 0 0 2px rgba(69,143,255,0.25) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(252,213,53,0.2) !important;
 }
 
 /* ─── FILE UPLOADER ───────────────────────────────────────────────────────── */
 [data-testid="stFileUploader"] {
   border: 1px dashed var(--hairline) !important;
-  border-radius: var(--r-md) !important;
-  background: var(--surface-soft) !important;
+  border-radius: var(--r-xl) !important;
+  background: var(--surface-card) !important;
   padding: 1rem !important;
 }
 [data-testid="stFileUploader"] button {
-  background: var(--canvas) !important;
+  background: var(--surface-elevated) !important;
   border: 1px solid var(--hairline) !important;
-  border-radius: var(--r-sm) !important;
-  color: var(--ink) !important;
+  border-radius: var(--r-md) !important;
+  color: var(--body) !important;
   font-size: 13px !important;
   padding: 8px 16px !important;
 }
@@ -298,215 +298,92 @@ button[data-testid="baseButton-secondary"] {
 [data-testid="stDataFrame"] iframe,
 [data-testid="dataframe"] {
   border: 1px solid var(--hairline) !important;
-  border-radius: var(--r-md) !important;
+  border-radius: var(--r-xl) !important;
 }
 
 /* ─── SLIDER ──────────────────────────────────────────────────────────────── */
 [data-testid="stSlider"] [data-testid="stSliderThumb"] {
-  background: var(--ink) !important;
+  background: var(--primary) !important;
 }
 [data-testid="stSlider"] [role="slider"] {
-  color: var(--ink) !important;
+  color: var(--primary) !important;
 }
 
 /* ─── ALERTS: st.success / st.warning / st.error / st.info ─────────────── */
 [data-testid="stAlert"] {
-  border-radius: var(--r-md) !important;
+  border-radius: var(--r-lg) !important;
   border-left-width: 3px !important;
   font-size: 14px !important;
+  background: var(--surface-card) !important;
 }
-[data-testid="stAlert"][kind="info"],
-div[data-baseweb="notification"][role="alert"]:has(.st-emotion-cache-1wbqy5l) {
-  background: #f0f5ff !important;
-  border-left-color: #254fad !important;
+[data-testid="stAlert"][kind="info"] {
+  border-left-color: var(--info) !important;
 }
 [data-testid="stAlert"][kind="success"] {
-  background: #f0faf0 !important;
-  border-left-color: var(--success) !important;
+  border-left-color: var(--trading-up) !important;
 }
 [data-testid="stAlert"][kind="warning"] {
-  background: #fffbeb !important;
-  border-left-color: #d97706 !important;
+  border-left-color: var(--primary) !important;
 }
 [data-testid="stAlert"][kind="error"] {
-  background: #fff5f5 !important;
-  border-left-color: #cc2200 !important;
+  border-left-color: var(--trading-down) !important;
 }
 
 /* ─── SPINNER ────────────────────────────────────────────────────────────── */
 [data-testid="stSpinner"] > div {
-  border-top-color: var(--ink) !important;
+  border-top-color: var(--primary) !important;
+}
+[data-testid="stSpinner"] p {
+  font-size: 14px !important;
+  color: var(--muted) !important;
 }
 
-/* ─── SIGNATURE CARD UTILITY CLASSES (injected via st.markdown) ─────────── */
+/* ─── Plotly chart container ─────────────────────────────────────────────── */
+.js-plotly-plot {
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+}
 
-/* Hero band — white editorial top section */
-.at-hero {
-  background: var(--canvas);
+/* ─── Streamlit default header override ────────────────────────────────────*/
+[data-testid="stHeader"] {
+  background: var(--canvas-dark) !important;
+  border-bottom: 1px solid var(--hairline) !important;
+}
+
+/* ─── Remove default Streamlit accent from form elements ────────────────── */
+.stSelectbox [data-baseweb="select"] > div:first-child:focus-within {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(252,213,53,0.2) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* BINANCE DESIGN SYSTEM — Utility Classes (via st.markdown)                  */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Hero band ──────────────────────────────────────────────────────────── */
+.bn-hero {
+  background: var(--canvas-dark);
   padding: 2rem 0 1.5rem;
   border-bottom: 1px solid var(--hairline);
   margin-bottom: 2rem;
 }
-.at-hero-title {
-  font-size: 28px;
-  font-weight: 500;
-  color: var(--ink);
+.bn-hero-title {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--on-dark);
   line-height: 1.2;
   margin: 0 0 4px;
 }
-.at-hero-sub {
+.bn-hero-sub {
   font-size: 14px;
   font-weight: 400;
   color: var(--muted);
   margin: 0;
 }
-.at-hero-badge {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  background: var(--surface-strong);
-  color: var(--muted);
-  border-radius: 9999px;
-  padding: 3px 10px;
-  margin-bottom: 12px;
-}
 
-/* Signature Coral card */
-.at-coral {
-  background: var(--sig-coral);
-  color: #ffffff;
-  border-radius: var(--r-lg);
-  padding: 32px 36px;
-  margin: 1.5rem 0;
-}
-.at-coral h3, .at-coral p { color: #ffffff !important; }
-.at-coral h3 { font-size: 20px; font-weight: 500; margin: 0 0 6px; }
-.at-coral p  { font-size: 13px; opacity: 0.85; margin: 0; }
-
-/* Signature Forest card */
-.at-forest {
-  background: var(--sig-forest);
-  color: #ffffff;
-  border-radius: var(--r-lg);
-  padding: 32px 36px;
-  margin: 1.5rem 0;
-}
-.at-forest h3, .at-forest p { color: #ffffff !important; }
-.at-forest h3 { font-size: 20px; font-weight: 500; margin: 0 0 6px; }
-.at-forest p  { font-size: 13px; opacity: 0.85; margin: 0; }
-
-/* Signature Dark card */
-.at-dark {
-  background: var(--surface-dark);
-  color: #ffffff;
-  border-radius: var(--r-lg);
-  padding: 32px 36px;
-  margin: 1.5rem 0;
-}
-.at-dark h3, .at-dark p { color: #ffffff !important; }
-.at-dark h3 { font-size: 20px; font-weight: 500; margin: 0 0 6px; }
-.at-dark p  { font-size: 13px; opacity: 0.80; margin: 0; }
-
-/* Cream callout */
-.at-cream {
-  background: var(--sig-cream);
-  border-radius: var(--r-md);
-  padding: 24px 28px;
-  margin: 1rem 0;
-}
-.at-cream h4 { font-size: 15px; font-weight: 500; color: var(--ink); margin: 0 0 4px; }
-.at-cream p  { font-size: 13px; color: var(--body); margin: 0; }
-
-/* Demo-grid cards (peach / mint) */
-.at-stat-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
-  margin: 1rem 0;
-}
-.at-stat-card {
-  background: var(--canvas);
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-md);
-  padding: 18px 20px 14px;
-}
-.at-stat-card .label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 6px;
-}
-.at-stat-card .value {
-  font-size: 22px;
-  font-weight: 400;
-  color: var(--ink);
-  line-height: 1.1;
-}
-.at-stat-card .delta {
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 4px;
-}
-.at-stat-card.peach  { background: #fff4ec; border-color: #fcd5b3; }
-.at-stat-card.mint   { background: #edf7f3; border-color: #b8e4d4; }
-.at-stat-card.cream  { background: var(--sig-cream); border-color: #e8d5b3; }
-.at-stat-card.yellow { background: #fffbea; border-color: #f4e08a; }
-
-/* CTA Band Light */
-.at-cta-band {
-  background: var(--surface-strong);
-  border-radius: var(--r-lg);
-  padding: 32px 36px;
-  margin: 2rem 0 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-.at-cta-band h3 {
-  font-size: 18px;
-  font-weight: 500;
-  color: var(--ink);
-  margin: 0 0 4px;
-}
-.at-cta-band p {
-  font-size: 13px;
-  color: var(--muted);
-  margin: 0;
-}
-
-/* Step badge (welcome guide) */
-.at-step {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--hairline);
-}
-.at-step:last-child { border-bottom: none; }
-.at-step-num {
-  flex-shrink: 0;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--ink);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.at-step-body { flex: 1; }
-.at-step-body strong { font-size: 14px; color: var(--ink); }
-.at-step-body span   { font-size: 13px; color: var(--muted); display: block; margin-top: 2px; }
-
-/* Section label (above section heading) */
-.at-eyebrow {
+/* ─── Eyebrow label (section prefix) ───────────────────────────────────── */
+.bn-eyebrow {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -515,24 +392,138 @@ div[data-baseweb="notification"][role="alert"]:has(.st-emotion-cache-1wbqy5l) {
   margin-bottom: 6px;
 }
 
-/* Inline tag/badge */
-.at-tag {
+/* ─── Dark surface card (replaces at-coral / at-forest / at-dark) ────────── */
+.bn-card {
+  background: var(--surface-card);
+  color: var(--on-dark);
+  border-radius: var(--r-xl);
+  padding: 24px 28px;
+  margin: 1rem 0;
+  border: 1px solid var(--hairline);
+}
+.bn-card h3, .bn-card p { color: var(--on-dark) !important; }
+.bn-card h3 { font-size: 16px; font-weight: 600; margin: 0 0 6px; }
+.bn-card p  { font-size: 13px; opacity: 0.8; margin: 0; }
+
+/* ─── Yellow accent card (replaces at-cream) ───────────────────────────── */
+.bn-info-card {
+  background: var(--surface-card);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--r-lg);
+  padding: 20px 24px;
+  margin: 1rem 0;
+}
+.bn-info-card h4 { font-size: 15px; font-weight: 600; color: var(--primary); margin: 0 0 4px; }
+.bn-info-card p  { font-size: 13px; color: var(--body); margin: 0; }
+
+/* ─── Stat grid (replaces at-stat-grid / at-stat-card) ─────────────────── */
+.bn-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 1rem 0;
+}
+.bn-stat-card {
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-xl);
+  padding: 18px 20px 14px;
+}
+.bn-stat-card .label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.bn-stat-card .value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1.1;
+  font-family: 'JetBrains Mono', monospace;
+}
+.bn-stat-card .delta {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+/* Semantic variants */
+.bn-stat-card.up   .value { color: var(--trading-up); }
+.bn-stat-card.down .value { color: var(--trading-down); }
+.bn-stat-card.info .value { color: var(--info); }
+.bn-stat-card.neutral .value { color: var(--body); font-size: 16px; }
+
+/* ─── CTA Band Dark (replaces at-cta-band) ─────────────────────────────── */
+.bn-cta-band {
+  background: var(--surface-card);
+  border-radius: var(--r-xl);
+  padding: 32px 36px;
+  margin: 2rem 0 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--hairline);
+}
+.bn-cta-band h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--on-dark);
+  margin: 0 0 4px;
+}
+.bn-cta-band p {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ─── Step guide (replaces at-step) ────────────────────────────────────── */
+.bn-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.bn-step:last-child { border-bottom: none; }
+.bn-step-num {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+}
+.bn-step-body { flex: 1; }
+.bn-step-body strong { font-size: 14px; color: var(--on-dark); }
+.bn-step-body span   { font-size: 13px; color: var(--muted); display: block; margin-top: 2px; }
+
+/* ─── Inline tag/badge ──────────────────────────────────────────────────── */
+.bn-tag {
   display: inline-block;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.06em;
   padding: 2px 8px;
-  border-radius: 9999px;
-  background: var(--surface-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface-elevated);
   color: var(--muted);
 }
-.at-tag.green { background: #dcf4dc; color: var(--success); }
-.at-tag.blue  { background: #dce8fa; color: #254fad; }
-.at-tag.coral { background: #fce8e2; color: #aa2d00; }
-.at-tag.amber { background: #fef3c7; color: #92400e; }
+.bn-tag.up     { background: rgba(14,203,129,0.15); color: var(--trading-up); }
+.bn-tag.down   { background: rgba(246,70,93,0.15);  color: var(--trading-down); }
+.bn-tag.yellow { background: rgba(252,213,53,0.15); color: var(--primary); }
+.bn-tag.info   { background: rgba(59,130,246,0.15); color: var(--info); }
 
-/* Caption table */
-.at-caption-row {
+/* ─── Caption row ───────────────────────────────────────────────────────── */
+.bn-caption-row {
   font-size: 12px;
   color: var(--muted);
   margin-top: 8px;
@@ -540,44 +531,16 @@ div[data-baseweb="notification"][role="alert"]:has(.st-emotion-cache-1wbqy5l) {
   border-top: 1px solid var(--hairline);
 }
 
-/* ─── SIDEBAR special overrides ──────────────────────────────────────────── */
+/* ─── SIDEBAR special overrides ─────────────────────────────────────────── */
 [data-testid="stSidebar"] [data-testid="stFileUploader"] {
-  background: #ffffff !important;
+  background: var(--surface-elevated) !important;
 }
 [data-testid="stSidebar"] .stSlider [role="slider"] {
-  background: var(--ink) !important;
-}
-/* Remove default Streamlit blue accent from radio */
-[data-testid="stSidebar"] [data-testid="stRadio"] [role="radio"]:checked + div {
-  color: var(--ink) !important;
-}
-
-/* ─── Plotly chart container ─────────────────────────────────────────────── */
-.js-plotly-plot {
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-md);
-  overflow: hidden;
-}
-
-/* ─── Remove default Streamlit red/blue accent colours from form elements ── */
-.stSelectbox [data-baseweb="select"] > div:first-child:focus-within {
-  border-color: var(--ink) !important;
-  box-shadow: 0 0 0 2px rgba(24,29,38,0.15) !important;
-}
-
-/* ─── Streamlit default header override ────────────────────────────────────*/
-[data-testid="stHeader"] {
-  background: var(--canvas) !important;
-  border-bottom: 1px solid var(--hairline) !important;
-}
-
-/* ─── Spinner text ──────────────────────────────────────────────────────── */
-[data-testid="stSpinner"] p {
-  font-size: 14px !important;
-  color: var(--muted) !important;
+  background: var(--primary) !important;
 }
 </style>
 """
+
 
 # ---------------------------------------------------------------------------
 # Session State Init
@@ -604,15 +567,15 @@ def render_sidebar() -> dict:
     with st.sidebar:
         # Brand mark
         st.markdown(
-            '<p class="at-eyebrow" style="margin-top:0">Forecasting System</p>'
-            '<p style="font-size:17px;font-weight:600;color:#181d26;margin:0 0 2px">Indomarco · DC</p>'
-            '<p style="font-size:12px;color:#41454d;margin:0">Prophet + LightGBM Hybrid</p>',
+            '<p class="bn-eyebrow" style="margin-top:0">Forecasting System</p>'
+            '<p style="font-size:17px;font-weight:600;color:#fcd535;margin:0 0 2px">Indomarco · DC</p>'
+            '<p style="font-size:12px;color:#707a8a;margin:0">Prophet + LightGBM Hybrid</p>',
             unsafe_allow_html=True,
         )
         st.markdown("<hr style='margin:1.25rem 0 1rem'>", unsafe_allow_html=True)
 
         # 1. Upload
-        st.markdown('<p class="at-eyebrow">1 — Data Transaksi</p>', unsafe_allow_html=True)
+        st.markdown('<p class="bn-eyebrow">1 — Data Transaksi</p>', unsafe_allow_html=True)
         uploaded_file = st.file_uploader(
             "Unggah log kasir (.csv)",
             type=["csv"],
@@ -623,7 +586,7 @@ def render_sidebar() -> dict:
         st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
         # 2. Preprocessing config
-        st.markdown('<p class="at-eyebrow">2 — Konfigurasi</p>', unsafe_allow_html=True)
+        st.markdown('<p class="bn-eyebrow">2 — Konfigurasi</p>', unsafe_allow_html=True)
         category_col = st.radio(
             "Pengelompokan",
             options=["DIV (Divisi – 55 kelompok)", "CAT_COD (Sub-Kategori – 289 kode)"],
@@ -642,7 +605,7 @@ def render_sidebar() -> dict:
         st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
 
         # 3. Category picker
-        st.markdown('<p class="at-eyebrow">3 — Kategori Produk</p>', unsafe_allow_html=True)
+        st.markdown('<p class="bn-eyebrow">3 — Kategori Produk</p>', unsafe_allow_html=True)
         categories = st.session_state.get("categories") or []
         if categories:
             selected_cat = st.selectbox(
@@ -653,7 +616,7 @@ def render_sidebar() -> dict:
             )
         else:
             st.markdown(
-                '<p style="font-size:13px;color:#41454d;padding:10px 0">Unggah data CSV terlebih dahulu.</p>',
+                '<p style="font-size:13px;color:#707a8a;padding:10px 0">Unggah data CSV terlebih dahulu.</p>',
                 unsafe_allow_html=True,
             )
             selected_cat = None
@@ -661,7 +624,7 @@ def render_sidebar() -> dict:
         st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
 
         # 4. Model params
-        st.markdown('<p class="at-eyebrow">4 — Parameter Model</p>', unsafe_allow_html=True)
+        st.markdown('<p class="bn-eyebrow">4 — Parameter Model</p>', unsafe_allow_html=True)
         seasonality_mode = st.selectbox(
             "Dekomposisi Musiman",
             options=SEASONALITY_MODES,
@@ -689,9 +652,9 @@ def render_sidebar() -> dict:
 
         # Footer caption
         st.markdown(
-            '<p style="font-size:11px;color:#9297a0;margin-top:1.25rem;line-height:1.6">'
+            '<p style="font-size:11px;color:#707a8a;margin-top:1.25rem;line-height:1.6">'
             'In-Memory · Data tidak tersimpan<br>'
-            '<strong style="color:#41454d">Alfiyan Nazar</strong> · 220511053<br>'
+            '<strong style="color:#fcd535">Alfiyan Nazar</strong> · 220511053<br>'
             'Teknik Informatika – UMC 2026'
             '</p>',
             unsafe_allow_html=True,
@@ -821,7 +784,7 @@ def handle_forecast_execution(params: dict) -> None:
 def _render_welcome() -> None:
     st.markdown(
         """
-        <div class="at-cream" style="margin-top:0">
+        <div class="bn-info-card" style="margin-top:0">
           <h4>Selamat datang di Forecasting System</h4>
           <p>Unggah log transaksi kasir POS Indomarco untuk memulai peramalan penjualan per kategori produk.</p>
         </div>
@@ -840,9 +803,9 @@ def _render_welcome() -> None:
     html = ""
     for i, (title, desc) in enumerate(steps, 1):
         html += (
-            f'<div class="at-step">'
-            f'<div class="at-step-num">{i}</div>'
-            f'<div class="at-step-body"><strong>{title}</strong><span>{desc}</span></div>'
+            f'<div class="bn-step">'
+            f'<div class="bn-step-num">{i}</div>'
+            f'<div class="bn-step-body"><strong>{title}</strong><span>{desc}</span></div>'
             f'</div>'
         )
     st.markdown(html, unsafe_allow_html=True)
@@ -851,7 +814,7 @@ def _render_welcome() -> None:
     st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
     st.markdown(
         """
-        <div class="at-dark">
+        <div class="bn-card">
           <h3>Format Berkas CSV</h3>
           <p>Kolom wajib: <strong>TANGGAL</strong> (DD-MM-YYYY) &nbsp;·&nbsp;
           <strong>RTYPE</strong> ('J' = Jual) &nbsp;·&nbsp;
@@ -880,19 +843,20 @@ def render_main_dashboard(params: dict) -> None:
 
     # ── Hero band ─────────────────────────────────────────────────────────
     st.markdown(
-        '<p class="at-eyebrow" style="margin-top:0">PT. Indomarco Prismatama · DC Cirebon</p>'
+        '<p class="bn-eyebrow" style="margin-top:0">PT. Indomarco Prismatama · DC Cirebon</p>'
         '<h1 style="margin-bottom:4px">Sales Forecasting Dashboard</h1>'
-        '<p style="font-size:14px;color:#41454d;margin:0">Model Hibrida Prophet + LightGBM &nbsp;·&nbsp; In-Memory Analytics</p>',
+        '<p style="font-size:14px;color:#707a8a;margin:0">Model Hibrida Prophet + LightGBM &nbsp;·&nbsp; In-Memory Analytics</p>',
         unsafe_allow_html=True,
     )
     st.markdown("<hr>", unsafe_allow_html=True)
 
     # ── Tabs ──────────────────────────────────────────────────────────────
+    blank = "ㅤ" # U+3164
     tab_overview, tab_forecast, tab_eval, tab_export = st.tabs([
-        "Overview",
-        "Kurva Peramalan",
-        "Evaluasi Akurasi",
-        "Ekspor Data",
+      f"Overview 📊{blank}",
+      f"{blank}Kurva Peramalan 📈{blank}",
+      f"{blank}Evaluasi Akurasi ✅{blank}",
+      f"{blank}Ekspor Data 💾",
     ])
 
     # ── TAB 1: OVERVIEW ───────────────────────────────────────────────────
@@ -914,7 +878,7 @@ def render_main_dashboard(params: dict) -> None:
 
         st.markdown(
             f"""
-            <div class="at-coral">
+            <div class="bn-card">
               <h3>{fname}</h3>
               <p>{daterange} &nbsp;·&nbsp; {n_tx:,} transaksi valid &nbsp;·&nbsp; {n_cat} kategori aktif</p>
             </div>
@@ -925,23 +889,23 @@ def render_main_dashboard(params: dict) -> None:
         # Stat grid (demo-grid-card style)
         st.markdown(
             f"""
-            <div class="at-stat-grid">
-              <div class="at-stat-card peach">
+            <div class="bn-stat-grid">
+              <div class="bn-stat-card up">
                 <div class="label">Total Transaksi</div>
                 <div class="value">{n_tx:,}</div>
                 <div class="delta">baris valid (RTYPE=J, QTY&gt;0)</div>
               </div>
-              <div class="at-stat-card mint">
+              <div class="bn-stat-card up">
                 <div class="label">Kategori Aktif</div>
                 <div class="value">{n_cat}</div>
                 <div class="delta">≥ {MIN_DATA_POINTS} titik observasi</div>
               </div>
-              <div class="at-stat-card cream">
+              <div class="bn-stat-card neutral">
                 <div class="label">Total Kuantitas</div>
                 <div class="value">{qty:,}</div>
                 <div class="delta">unit barang terjual</div>
               </div>
-              <div class="at-stat-card yellow">
+              <div class="bn-stat-card yellow">
                 <div class="label">Periode Data</div>
                 <div class="value">{daterange or "—"}</div>
                 <div class="delta">rentang historis tersedia</div>
@@ -956,7 +920,7 @@ def render_main_dashboard(params: dict) -> None:
         if ts_df is not None:
             st.markdown("<h2 style='margin-top:2rem'>Deret Waktu — 5 Kategori Teratas</h2>", unsafe_allow_html=True)
             st.markdown(
-                '<p class="at-caption-row">Volume penjualan tertinggi. Maks 100 baris ditampilkan.</p>',
+                '<p class="bn-caption-row">Volume penjualan tertinggi. Maks 100 baris ditampilkan.</p>',
                 unsafe_allow_html=True,
             )
             top5 = ts_df.groupby("category")["y"].sum().nlargest(5).index.tolist()
@@ -968,7 +932,7 @@ def render_main_dashboard(params: dict) -> None:
     with tab_forecast:
         if series_df is None or test_results is None or future_df is None:
             st.markdown(
-                '<div class="at-cream"><h4>Belum ada hasil peramalan</h4>'
+                '<div class="bn-info-card"><h4>Belum ada hasil peramalan</h4>'
                 '<p>Pilih kategori di sidebar lalu klik <strong>Jalankan Peramalan</strong>.</p></div>',
                 unsafe_allow_html=True,
             )
@@ -985,7 +949,7 @@ def render_main_dashboard(params: dict) -> None:
 
             # Signature coral header row
             st.markdown(
-                f'<div class="at-eyebrow">Divisi / Kategori</div>'
+                f'<div class="bn-eyebrow">Divisi / Kategori</div>'
                 f'<h2 style="margin-top:0">{selected_cat}</h2>',
                 unsafe_allow_html=True,
             )
@@ -1032,23 +996,23 @@ def render_main_dashboard(params: dict) -> None:
             freq_label=params.get("freq_label", "W-MON"),
             show_prophet=True,
         )
-        # Apply clean Airtable-style chart theme
+        # Apply clean Binance dark chart theme
         fig_main.update_layout(
-            paper_bgcolor="#ffffff",
-            plot_bgcolor="#f8fafc",
-            font=dict(family="Inter, system-ui, sans-serif", size=12, color="#333840"),
-            title=dict(font=dict(size=15, weight=500, color="#181d26")),
+            paper_bgcolor="#0b0e11",
+            plot_bgcolor="#1e2329",
+            font=dict(family="Inter, system-ui, sans-serif", size=12, color="#eaecef"),
+            title=dict(font=dict(size=15, weight=500, color="#ffffff")),
             xaxis=dict(
-                gridcolor="#dddddd", gridwidth=1,
-                linecolor="#dddddd", tickfont=dict(size=11),
+                gridcolor="#2b3139", gridwidth=1,
+                linecolor="#2b3139", tickfont=dict(size=11),
             ),
             yaxis=dict(
-                gridcolor="#dddddd", gridwidth=1,
-                linecolor="#dddddd", tickfont=dict(size=11),
+                gridcolor="#2b3139", gridwidth=1,
+                linecolor="#2b3139", tickfont=dict(size=11),
             ),
             legend=dict(
-                bgcolor="rgba(255,255,255,0.9)",
-                bordercolor="#dddddd",
+                bgcolor="rgba(30,35,41,0.9)",
+                bordercolor="#2b3139",
                 borderwidth=1,
                 font=dict(size=12),
             ),
@@ -1060,7 +1024,7 @@ def render_main_dashboard(params: dict) -> None:
     with tab_eval:
         if eval_report is None:
             st.markdown(
-                '<div class="at-cream"><h4>Belum ada laporan evaluasi</h4>'
+                '<div class="bn-info-card"><h4>Belum ada laporan evaluasi</h4>'
                 '<p>Jalankan peramalan terlebih dahulu.</p></div>',
                 unsafe_allow_html=True,
             )
@@ -1069,10 +1033,15 @@ def render_main_dashboard(params: dict) -> None:
         mape_val = eval_report["metrics_hybrid"]["MAPE_%"]
         lbl, emj = evaluator.interpret_mape(mape_val)
 
-        # MAPE interpretasi sebagai dark/forest signature card
-        card_class = "at-forest" if mape_val < 10 else ("at-dark" if mape_val < 20 else "at-coral")
+        # MAPE interpretasi sebagai Binance dark card dengan border semantik trading
+        if mape_val < 10:
+            border_color = "#0ecb81"   # trading-up green — Sangat Baik
+        elif mape_val < 20:
+            border_color = "#fcd535"   # Binance yellow — Baik
+        else:
+            border_color = "#f6465d"   # trading-down red — Layak / Kurang
         st.markdown(
-            f'<div class="{card_class}">'
+            f'<div class="bn-card" style="border-left:4px solid {border_color}">'
             f'<h3>Kualitas Model: {lbl}</h3>'
             f'<p>MAPE = {mape_val:.2f}% &nbsp;·&nbsp; '
             f'Kriteria: &lt;10% Sangat Baik · 10–20% Baik · 20–50% Layak · &gt;50% Kurang</p>'
@@ -1082,7 +1051,7 @@ def render_main_dashboard(params: dict) -> None:
 
         st.markdown("<h2>Perbandingan Model</h2>", unsafe_allow_html=True)
         st.markdown(
-            '<p style="font-size:13px;color:#41454d;margin-bottom:1rem">'
+            '<p style="font-size:13px;color:#707a8a;margin-bottom:1rem">'
             'Prophet Tunggal dibandingkan dengan Model Hibrida Prophet + LightGBM pada data uji (20%).'
             '</p>',
             unsafe_allow_html=True,
@@ -1097,11 +1066,11 @@ def render_main_dashboard(params: dict) -> None:
             category_label=selected_cat,
         )
         fig_res.update_layout(
-            paper_bgcolor="#ffffff",
-            plot_bgcolor="#f8fafc",
-            font=dict(family="Inter, system-ui, sans-serif", size=12, color="#333840"),
-            xaxis=dict(gridcolor="#dddddd", linecolor="#dddddd"),
-            yaxis=dict(gridcolor="#dddddd", linecolor="#dddddd"),
+            paper_bgcolor="#0b0e11",
+            plot_bgcolor="#1e2329",
+            font=dict(family="Inter, system-ui, sans-serif", size=12, color="#eaecef"),
+            xaxis=dict(gridcolor="#2b3139", linecolor="#2b3139"),
+            yaxis=dict(gridcolor="#2b3139", linecolor="#2b3139"),
             margin=dict(l=40, r=16, t=50, b=40),
         )
         st.plotly_chart(fig_res, use_container_width=True)
@@ -1113,16 +1082,16 @@ def render_main_dashboard(params: dict) -> None:
                 st.markdown("<hr>", unsafe_allow_html=True)
                 st.markdown("<h2>Feature Importance LightGBM</h2>", unsafe_allow_html=True)
                 st.markdown(
-                    '<p style="font-size:13px;color:#41454d;margin-bottom:1rem">'
+                    '<p style="font-size:13px;color:#707a8a;margin-bottom:1rem">'
                     'Kontribusi setiap fitur residual terhadap prediksi koreksi LightGBM (gain-based).'
                     '</p>',
                     unsafe_allow_html=True,
                 )
                 fig_fi = viz.plot_feature_importance(fi_df)
                 fig_fi.update_layout(
-                    paper_bgcolor="#ffffff",
-                    plot_bgcolor="#f8fafc",
-                    font=dict(family="Inter, system-ui, sans-serif", size=12, color="#333840"),
+                    paper_bgcolor="#0b0e11",
+                    plot_bgcolor="#1e2329",
+                    font=dict(family="Inter, system-ui, sans-serif", size=12, color="#eaecef"),
                     margin=dict(l=160, r=16, t=50, b=40),
                 )
                 st.plotly_chart(fig_fi, use_container_width=True)
@@ -1131,14 +1100,14 @@ def render_main_dashboard(params: dict) -> None:
     with tab_export:
         if future_df is None:
             st.markdown(
-                '<div class="at-cream"><h4>Belum ada data untuk diekspor</h4>'
+                '<div class="bn-info-card"><h4>Belum ada data untuk diekspor</h4>'
                 '<p>Jalankan peramalan terlebih dahulu.</p></div>',
                 unsafe_allow_html=True,
             )
             return
 
         st.markdown(
-            f'<div class="at-eyebrow">Proyeksi Masa Depan</div>'
+            f'<div class="bn-eyebrow">Proyeksi Masa Depan</div>'
             f'<h2 style="margin-top:0">Divisi {selected_cat} — {st.session_state.get("horizon", DEFAULT_HORIZON)} Periode</h2>',
             unsafe_allow_html=True,
         )
@@ -1150,7 +1119,7 @@ def render_main_dashboard(params: dict) -> None:
         # CTA band for download
         csv_bytes = viz.export_csv_bytes(future_df, category_label=selected_cat)
         st.markdown(
-            '<div class="at-cta-band">'
+            '<div class="bn-cta-band">'
             '<div><h3>Unduh Laporan Proyeksi</h3>'
             '<p>Berkas CSV ter-encode UTF-8. Dapat dibuka di Excel atau Google Sheets.</p></div>'
             '</div>',
@@ -1174,8 +1143,8 @@ def render_main_dashboard(params: dict) -> None:
 # Entry Point
 # ---------------------------------------------------------------------------
 def main() -> None:
-    # Inject Airtable Design System CSS first
-    st.markdown(AIRTABLE_CSS, unsafe_allow_html=True)
+    # Inject Binance Design System CSS first
+    st.markdown(BINANCE_CSS, unsafe_allow_html=True)
 
     params = render_sidebar()
     handle_data_loading(params)

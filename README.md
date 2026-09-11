@@ -10,7 +10,10 @@
 
 Sistem analitik web berbasis **Streamlit** yang memproses data log transaksi kasir POS (`.csv`) untuk menghasilkan proyeksi penjualan per kategori produk menggunakan **Model Hibrida Facebook Prophet + LightGBM**.
 
-**Arsitektur**: Stateless In-Memory — tanpa database relasional, tanpa login.
+**Arsitektur**: Stateless In-Memory — tanpa database relasional, tanpa login.  
+**Desain UI**: Binance Design System (`DESIGN-binance.md`) — dark canvas finansial dengan aksen kuning Binance.
+
+📖 **Panduan Pengguna & Bahan Presentasi**: Baca [PANDUAN_PENGGUNAAN.md](PANDUAN_PENGGUNAAN.md) untuk petunjuk langkah demi langkah, penjelasan fitur awam, dan naskah demo sidang.
 
 ### Alur Model Hibrida:
 ```
@@ -29,7 +32,9 @@ y(t) = ŷ_Prophet(t) + ê_LightGBM(t)
 Forecasting System/
 ├── app.py                    # Streamlit Dashboard (Controller)
 ├── requirements.txt          # Dependensi pustaka Python
-├── README.md                 # Dokumentasi ini
+├── README.md                 # Dokumentasi teknis sistem
+├── PANDUAN_PENGGUNAAN.md     # Panduan lengkap pengguna & materi presentasi
+├── DESIGN-binance.md         # Spesifikasi Binance Design System
 ├── src/
 │   ├── __init__.py
 │   ├── config.py             # Parameter default & skema kolom
