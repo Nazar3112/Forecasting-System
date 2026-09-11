@@ -568,7 +568,6 @@ def render_sidebar() -> dict:
         # Brand mark
         st.markdown(
             '<p class="bn-eyebrow" style="margin-top:0">Forecasting System</p>'
-            '<p style="font-size:17px;font-weight:600;color:#fcd535;margin:0 0 2px">Indomarco · DC</p>'
             '<p style="font-size:12px;color:#707a8a;margin:0">Prophet + LightGBM Hybrid</p>',
             unsafe_allow_html=True,
         )
@@ -843,7 +842,6 @@ def render_main_dashboard(params: dict) -> None:
 
     # ── Hero band ─────────────────────────────────────────────────────────
     st.markdown(
-        '<p class="bn-eyebrow" style="margin-top:0">PT. Indomarco Prismatama · DC Cirebon</p>'
         '<h1 style="margin-bottom:4px">Sales Forecasting Dashboard</h1>'
         '<p style="font-size:14px;color:#707a8a;margin:0">Model Hibrida Prophet + LightGBM &nbsp;·&nbsp; In-Memory Analytics</p>',
         unsafe_allow_html=True,
