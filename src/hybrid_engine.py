@@ -40,13 +40,12 @@ class HybridForecastingEngine:
     Mesin peramalan hibrida Prophet + LightGBM.
 
     Alur komputasi:
-    1. train_test_split()     → bagi data kronologis 80/20
-    2. fit_prophet()          → latih Prophet pada data training
-    3. extract_residuals()    → hitung galat e(t) = y − ŷ_Prophet
-    4. build_features()       → buat fitur lag + rolling + kalender
-    5. fit_lightgbm()         → latih LGBMRegressor pada residual
-    6. evaluate_on_test()     → proyeksi hybrid di data uji
-    7. forecast_future()      → proyeksi horizon masa depan
+    1. train_test_split()          → bagi data kronologis 80/20
+    2. fit_prophet()               → latih Prophet pada data training
+    3. extract_residuals()         → hitung galat e(t) = y_aktual − ŷ_Prophet
+    4. build_feature_matrix()      → buat fitur eksogen (ds) + lag QTY (y)
+    5. fit_lightgbm_residual()     → latih LGBMRegressor pada residual
+    6. generate_hybrid_predictions → proyeksi hibrida pada test / masa depan
     """
 
     def __init__(
@@ -63,7 +62,7 @@ class HybridForecastingEngine:
         ----------
         seasonality_mode : 'additive' | 'multiplicative'
         test_size        : Proporsi data uji kronologis (0.0–1.0).
-        lags             : Langkah kelambatan fitur residual.
+        lags             : Langkah kelambatan fitur lag QTY.
         rolling_windows  : Ukuran jendela rolling statistics.
         prophet_params   : Override parameter Prophet.
         lgbm_params      : Override parameter LightGBM.
@@ -89,10 +88,11 @@ class HybridForecastingEngine:
         self.lgbm_model:    Optional[LGBMRegressor] = None
 
         # Data intermediat (tersimpan di-memory)
-        self._train_df:    Optional[pd.DataFrame] = None
-        self._test_df:     Optional[pd.DataFrame] = None
-        self._residuals:   Optional[pd.Series]    = None
-        self._freq:        str = DEFAULT_FREQ
+        self._train_df:       Optional[pd.DataFrame] = None
+        self._test_df:        Optional[pd.DataFrame] = None
+        self._residuals:      Optional[np.ndarray]   = None
+        self._feature_names:  List[str]              = []
+        self._freq:           str = DEFAULT_FREQ
 
         # Status
         self._is_fitted: bool = False
@@ -107,7 +107,7 @@ class HybridForecastingEngine:
         freq:      str = DEFAULT_FREQ,
     ) -> "HybridForecastingEngine":
         """
-        Jalankan pipeline pelatihan lengkap.
+        Jalankan pipeline pelatihan lengkap: Prophet -> Residual -> LightGBM.
 
         Parameters
         ----------
@@ -121,29 +121,28 @@ class HybridForecastingEngine:
         self._freq = freq
         series_df  = series_df[["ds", "y"]].dropna().sort_values("ds").reset_index(drop=True)
 
-        # 1. Train / Test split
+        # 1. Train / Test split secara kronologis
         self._train_df, self._test_df = self.train_test_split(series_df)
         logger.info(
             "Split: train=%d | test=%d periode",
             len(self._train_df), len(self._test_df),
         )
 
-        # 2. Fit Prophet
+        # 2. Fit Prophet pada data latih
         prophet_train_pred = self._fit_prophet_internal(self._train_df)
 
-        # 3. Hitung residual pada data training
+        # 3. Hitung target residual: residuals = y_aktual - y_pred_prophet
         self._residuals = self._train_df["y"].values - prophet_train_pred
 
-        # 4. Bangun fitur dari residual training
-        X_train, y_res_train = self._build_residual_features(
-            self._train_df["ds"].values, self._residuals
-        )
+        # 4. Bangun matriks fitur dari data latih (fitur eksogen ds + lag QTY)
+        full_train_feat = self.build_feature_matrix(self._train_df, self._train_df["y"])
+        max_drop = max(max(self.lags), max(self.rolling_windows)) if self.lags and self.rolling_windows else 0
+
+        X_train = full_train_feat.iloc[max_drop:].reset_index(drop=True)
+        y_train = self._residuals[max_drop:]
 
         # 5. Fit LightGBM pada residual
-        if len(X_train) > 0:
-            self._fit_lgbm_internal(X_train, y_res_train)
-        else:
-            logger.warning("Tidak cukup data setelah feature engineering untuk melatih LightGBM.")
+        self.fit_lightgbm_residual(X_train, y_train)
 
         self._is_fitted = True
         return self
@@ -152,13 +151,9 @@ class HybridForecastingEngine:
         """
         Hasilkan prediksi hybrid pada data uji dan kembalikan DataFrame
         dengan kolom: ['ds', 'y', 'y_prophet', 'y_residual_lgbm', 'y_hybrid'].
-
-        Returns
-        -------
-        pd.DataFrame
         """
         self._require_fitted()
-        return self._predict_period(self._test_df, is_future=False)
+        return self.generate_hybrid_predictions(self._test_df, is_future=False)
 
     def forecast_future(
         self,
@@ -179,15 +174,15 @@ class HybridForecastingEngine:
         """
         self._require_fitted()
 
-        # Buat DataFrame tanggal masa depan (mulai setelah periode terakhir)
-        last_date  = series_df["ds"].max()
+        # Buat deret tanggal masa depan
+        last_date = series_df["ds"].max()
         future_dates = pd.date_range(
             start=last_date + pd.tseries.frequencies.to_offset(self._freq),
             periods=horizon,
             freq=self._freq,
         )
         future_df = pd.DataFrame({"ds": future_dates, "y": np.nan})
-        return self._predict_period(future_df, is_future=True)
+        return self.generate_hybrid_predictions(future_df, is_future=True)
 
     # ------------------------------------------------------------------
     # Split & Training
@@ -199,11 +194,6 @@ class HybridForecastingEngine:
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Bagi deret waktu secara kronologis menjadi data latih dan uji.
-        Tidak menggunakan random shuffle — urutan waktu dipertahankan.
-
-        Returns
-        -------
-        (train_df, test_df)
         """
         n_test  = max(1, int(len(df) * self.test_size))
         n_train = len(df) - n_test
@@ -213,11 +203,10 @@ class HybridForecastingEngine:
 
     def _fit_prophet_internal(self, train_df: pd.DataFrame) -> np.ndarray:
         """
-        Inisialisasi dan latih Prophet; kembalikan prediksi pada data latih.
+        Inisialisasi dan latih Prophet; kembalikan prediksi yhat pada data latih.
         """
         self.prophet_model = Prophet(**self._prophet_params)
 
-        # Suppressi log verbose bawaan Prophet/Stan
         import logging as _log
         _log.getLogger("prophet").setLevel(_log.WARNING)
         _log.getLogger("cmdstanpy").setLevel(_log.WARNING)
@@ -226,22 +215,76 @@ class HybridForecastingEngine:
         forecast = self.prophet_model.predict(train_df[["ds"]])
         return forecast["yhat"].values
 
-    def _fit_lgbm_internal(
+    def fit_lightgbm_residual(
         self,
         X_train: pd.DataFrame,
         y_train: np.ndarray,
     ) -> None:
-        """Inisialisasi dan latih LGBMRegressor."""
+        """
+        Latih LGBMRegressor menggunakan matriks fitur X_train dan target y_train (residuals).
+        """
+        if len(X_train) == 0:
+            logger.warning("X_train kosong. LightGBM tidak dapat dilatih.")
+            return
+
+        self._feature_names = list(X_train.columns)
         self.lgbm_model = LGBMRegressor(**self._lgbm_params)
         self.lgbm_model.fit(X_train, y_train)
         logger.info(
-            "LightGBM dilatih: %d sampel, %d fitur",
-            len(X_train), X_train.shape[1],
+            "LightGBM Residual dilatih: %d sampel, %d fitur (%s)",
+            len(X_train), X_train.shape[1], ", ".join(self._feature_names[:4]) + "...",
         )
 
     # ------------------------------------------------------------------
-    # Feature Engineering Residual
+    # Feature Engineering
     # ------------------------------------------------------------------
+
+    @staticmethod
+    def extract_exogenous_features(dates: pd.Series | pd.DatetimeIndex) -> pd.DataFrame:
+        """
+        Mengekstrak fitur eksogen kalender dari kolom waktu ds:
+          - month          : Bulan (1-12)
+          - weekofyear     : Minggu ke-n dalam setahun (1-53)
+          - quarter        : Kuartal (1-4)
+          - day            : Hari dalam bulan (1-31)
+          - dayofweek      : Hari dalam minggu (0=Senin, 6=Minggu)
+          - is_month_end   : Indikator akhir bulan (0 / 1)
+          - is_month_start : Indikator awal bulan (0 / 1)
+        """
+        dt = pd.to_datetime(dates)
+        return pd.DataFrame({
+            "month":          dt.dt.month.values,
+            "weekofyear":     dt.dt.isocalendar().week.astype(int).values,
+            "quarter":        dt.dt.quarter.values,
+            "day":            dt.dt.day.values,
+            "dayofweek":      dt.dt.dayofweek.values,
+            "is_month_end":   dt.dt.is_month_end.astype(int).values,
+            "is_month_start": dt.dt.is_month_start.astype(int).values,
+        })
+
+    def build_feature_matrix(
+        self,
+        df: pd.DataFrame,
+        y_series: Optional[pd.Series] = None,
+    ) -> pd.DataFrame:
+        """
+        Bangun matriks fitur independen (X) lengkap:
+        Fitur eksogen waktu + fitur lag kuantitas QTY (1, 2, 3, ...) + rolling statistics.
+        """
+        exog = self.extract_exogenous_features(df["ds"])
+        exog.index = df.index
+
+        if y_series is not None:
+            s = pd.Series(y_series.values, index=df.index)
+            # Fitur lag kuantitas (QTY)
+            for lag in self.lags:
+                exog[f"lag_{lag}"] = s.shift(lag).values
+            # Fitur rolling statistics kuantitas
+            for win in self.rolling_windows:
+                exog[f"roll_mean_{win}"] = s.shift(1).rolling(win).mean().values
+                exog[f"roll_std_{win}"]  = s.shift(1).rolling(win).std().fillna(0).values
+
+        return exog
 
     def _build_residual_features(
         self,
@@ -249,149 +292,88 @@ class HybridForecastingEngine:
         residuals: np.ndarray,
     ) -> Tuple[pd.DataFrame, np.ndarray]:
         """
-        Bangun matriks fitur tabular untuk melatih LightGBM pada residual.
-
-        Fitur yang dibangun:
-          - Lag residual e(t-k) untuk setiap k di self.lags
-          - Rolling mean residual dengan jendela di self.rolling_windows
-          - Rolling std  residual dengan jendela di self.rolling_windows
-          - Fitur kalender: bulan, minggu-dalam-tahun, kuartal
-
-        Returns
-        -------
-        (X : pd.DataFrame, y : np.ndarray)
+        Kompatibilitas unit-test: Bangun fitur lag dan kalender dari deret nilai.
         """
-        series = pd.Series(residuals, index=pd.DatetimeIndex(dates))
-        feat   = pd.DataFrame(index=series.index)
+        df_temp = pd.DataFrame({"ds": dates})
+        feat = self.build_feature_matrix(df_temp, pd.Series(residuals))
 
-        # Lag features
-        for lag in self.lags:
-            feat[f"lag_{lag}"] = series.shift(lag)
-
-        # Rolling statistics
-        for win in self.rolling_windows:
-            feat[f"roll_mean_{win}"] = series.shift(1).rolling(win).mean()
-            feat[f"roll_std_{win}"]  = series.shift(1).rolling(win).std()
-
-        # Kalender
-        idx = pd.DatetimeIndex(dates)
-        feat["month"]     = idx.month
-        feat["weekofyear"] = idx.isocalendar().week.astype(int).values
-        feat["quarter"]   = idx.quarter
-
-        # Hapus baris dengan NaN (akibat lag/rolling)
         max_lag = max(self.lags) if self.lags else 0
         max_win = max(self.rolling_windows) if self.rolling_windows else 0
         drop_n  = max(max_lag, max_win)
 
-        feat = feat.iloc[drop_n:]
-        y    = residuals[drop_n:]
-
-        return feat.reset_index(drop=True), y
-
-    def _build_future_features(
-        self,
-        all_dates:        pd.DatetimeIndex,
-        all_residuals:    np.ndarray,
-        horizon:          int,
-        forecast_dates:   pd.DatetimeIndex,
-    ) -> pd.DataFrame:
-        """
-        Bangun fitur lag untuk periode masa depan secara rekursif.
-        Menggunakan residual historis sebagai basis awal, kemudian
-        mengisi residual yang diprediksi secara berulang.
-        """
-        # Buffer residual: historis + placeholder masa depan
-        residual_buffer = list(all_residuals)
-        results = []
-
-        for i, fd in enumerate(forecast_dates):
-            res_series = pd.Series(residual_buffer)
-            feat_row: Dict = {}
-
-            for lag in self.lags:
-                idx_lag = len(residual_buffer) - lag
-                feat_row[f"lag_{lag}"] = residual_buffer[idx_lag] if idx_lag >= 0 else 0.0
-
-            for win in self.rolling_windows:
-                window_vals = residual_buffer[-win:] if len(residual_buffer) >= win else residual_buffer
-                feat_row[f"roll_mean_{win}"] = float(np.mean(window_vals)) if window_vals else 0.0
-                feat_row[f"roll_std_{win}"]  = float(np.std(window_vals))  if len(window_vals) > 1 else 0.0
-
-            feat_row["month"]      = fd.month
-            feat_row["weekofyear"] = fd.isocalendar()[1]
-            feat_row["quarter"]    = fd.quarter
-
-            feat_df  = pd.DataFrame([feat_row])
-            res_pred = float(self.lgbm_model.predict(feat_df)[0]) if self.lgbm_model else 0.0
-
-            residual_buffer.append(res_pred)
-            results.append(feat_row)
-
-        return pd.DataFrame(results)
+        feat_clean = feat.iloc[drop_n:].reset_index(drop=True)
+        y_clean    = residuals[drop_n:]
+        return feat_clean, y_clean
 
     # ------------------------------------------------------------------
-    # Prediksi
+    # Inference & Hibrida
     # ------------------------------------------------------------------
 
-    def _predict_period(
+    def generate_hybrid_predictions(
         self,
         period_df:  pd.DataFrame,
         is_future:  bool = False,
     ) -> pd.DataFrame:
         """
-        Hasilkan prediksi untuk satu periode (bisa test set atau future).
-
-        Langkah:
-          1. Prophet memprediksi pada tanggal di period_df.
-          2. LightGBM memprediksi koreksi residual.
-          3. Jumlahkan, potong ke >= 0.
+        Menghasilkan prediksi hibrida y_hybrid = max(0, y_prophet + y_residual_lgbm).
+        Memastikan struktur matriks fitur persis identik dengan data latih.
         """
+        self._require_fitted()
         result = period_df[["ds"]].copy()
         if "y" in period_df.columns:
             result["y"] = period_df["y"].values
 
-        # Prediksi Prophet
+        # 1. Prediksi Prophet
         prophet_forecast = self.prophet_model.predict(result[["ds"]])
         result["y_prophet"] = prophet_forecast["yhat"].values.clip(min=0)
 
-        # Prediksi residual LightGBM
-        if self.lgbm_model is not None:
-            if is_future:
-                # Untuk masa depan, gunakan residual training sebagai basis
-                train_dates   = self._train_df["ds"].values
-                train_y       = self._train_df["y"].values
-                train_prophet = self.prophet_model.predict(
-                    self._train_df[["ds"]]
-                )["yhat"].values
-                train_residuals = train_y - train_prophet
-
-                feat_future = self._build_future_features(
-                    all_dates=pd.DatetimeIndex(train_dates),
-                    all_residuals=train_residuals,
-                    horizon=len(result),
-                    forecast_dates=pd.DatetimeIndex(result["ds"].values),
-                )
-                result["y_residual_lgbm"] = self.lgbm_model.predict(feat_future)
+        # 2. Prediksi Residual LightGBM
+        if self.lgbm_model is not None and self._feature_names:
+            if not is_future:
+                # Mode Data Uji (Test Set):
+                # Gabungkan data latih + uji untuk menghitung nilai lag QTY aktual tanpa kebocoran data
+                combined_df = pd.concat([self._train_df, period_df], ignore_index=True)
+                full_feat = self.build_feature_matrix(combined_df, combined_df["y"])
+                X_test = full_feat.tail(len(period_df))[self._feature_names].reset_index(drop=True)
+                result["y_residual_lgbm"] = self.lgbm_model.predict(X_test)
             else:
-                # Untuk test set, hitung residual aktual dari training
-                # lalu bangun fitur untuk periode uji
-                train_prophet_pred = self.prophet_model.predict(
-                    self._train_df[["ds"]]
-                )["yhat"].values
-                train_residuals = self._train_df["y"].values - train_prophet_pred
+                # Mode Proyeksi Masa Depan (Future Forecast):
+                # Peramalan rekursif/autoregresif menggunakan buffer riwayat QTY
+                full_hist = self._train_df if self._test_df is None else pd.concat([self._train_df, self._test_df], ignore_index=True)
+                y_buffer = list(full_hist["y"].values)
+                res_preds = []
 
-                X_test, _ = self._build_residual_features(
-                    np.concatenate([self._train_df["ds"].values, result["ds"].values]),
-                    np.concatenate([train_residuals, np.zeros(len(result))]),
-                )
-                # Ambil hanya baris sesuai jumlah period uji
-                X_test_last = X_test.tail(len(result)).reset_index(drop=True)
-                result["y_residual_lgbm"] = self.lgbm_model.predict(X_test_last)
+                for i, row_ds in enumerate(result["ds"]):
+                    dt = pd.to_datetime(row_ds)
+                    feat_row = {
+                        "month":          dt.month,
+                        "weekofyear":     int(dt.isocalendar().week),
+                        "quarter":        dt.quarter,
+                        "day":            dt.day,
+                        "dayofweek":      dt.dayofweek,
+                        "is_month_end":   int(dt.is_month_end),
+                        "is_month_start": int(dt.is_month_start),
+                    }
+                    for lag in self.lags:
+                        feat_row[f"lag_{lag}"] = y_buffer[-lag] if len(y_buffer) >= lag else 0.0
+                    for win in self.rolling_windows:
+                        w_vals = y_buffer[-win:] if len(y_buffer) >= win else y_buffer
+                        feat_row[f"roll_mean_{win}"] = float(np.mean(w_vals)) if w_vals else 0.0
+                        feat_row[f"roll_std_{win}"]  = float(np.std(w_vals)) if len(w_vals) > 1 else 0.0
+
+                    X_step = pd.DataFrame([feat_row])[self._feature_names]
+                    step_res = float(self.lgbm_model.predict(X_step)[0])
+                    res_preds.append(step_res)
+
+                    # Update buffer dengan nilai prediksi hybrid untuk lag step berikutnya
+                    step_hybrid = max(0.0, float(result["y_prophet"].iloc[i] + step_res))
+                    y_buffer.append(step_hybrid)
+
+                result["y_residual_lgbm"] = res_preds
         else:
             result["y_residual_lgbm"] = 0.0
 
-        # Sintesis akhir: gabungkan + clip non-negatif
+        # 3. Rekonsiliasi Hibrida: y_hybrid = max(0, y_prophet + y_residual_lgbm)
         result["y_hybrid"] = (result["y_prophet"] + result["y_residual_lgbm"]).clip(lower=0)
 
         return result.reset_index(drop=True)
@@ -402,8 +384,7 @@ class HybridForecastingEngine:
 
     def get_prophet_components(self) -> pd.DataFrame | None:
         """
-        Kembalikan DataFrame komponen Prophet (trend, weekly, yearly)
-        untuk visualisasi dekomposisi di dasbor.
+        Kembalikan DataFrame komponen Prophet (trend, weekly, yearly).
         """
         if self.prophet_model is None or self._train_df is None:
             return None
@@ -413,13 +394,12 @@ class HybridForecastingEngine:
 
     def get_feature_importance(self) -> pd.DataFrame | None:
         """
-        Kembalikan tabel feature importance LightGBM (gain-based).
-        Berguna untuk analisis kontribusi fitur residual di laporan skripsi.
+        Kembalikan tabel feature importance LightGBM (gain-based / split-based).
         """
-        if self.lgbm_model is None:
+        if self.lgbm_model is None or not hasattr(self.lgbm_model, "feature_importances_"):
             return None
         importances = self.lgbm_model.feature_importances_
-        feature_names = self.lgbm_model.feature_name_
+        feature_names = self._feature_names or [f"feature_{i}" for i in range(len(importances))]
 
         fi_df = pd.DataFrame({
             "feature":    feature_names,
