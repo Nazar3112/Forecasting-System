@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 # Konfigurasi Halaman
 # ---------------------------------------------------------------------------
 st.set_page_config(
-    page_title="Sales Forecast · Indomarco",
+    page_title="Sales Forecast",
     page_icon="📦",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -785,7 +785,7 @@ def _render_welcome() -> None:
         """
         <div class="bn-info-card" style="margin-top:0">
           <h4>Selamat datang di Forecasting System</h4>
-          <p>Unggah log transaksi kasir POS Indomarco untuk memulai peramalan penjualan per kategori produk.</p>
+          <p>Unggah log transaksi kasir POS untuk memulai peramalan penjualan per kategori produk.</p>
         </div>
         """,
         unsafe_allow_html=True,
