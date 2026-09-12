@@ -5,7 +5,8 @@
 > **Alfiyan Nazar (220511053)** | Universitas Muhammadiyah Cirebon, 2026
 
 ---
-
+## 🔗 Online Version
+https://forecasting-system-9suvjwpawxu33efswv9sam.streamlit.app/
 ## 📋 Deskripsi Sistem
 
 Sistem analitik web berbasis **Streamlit** yang memproses data log transaksi kasir POS (`.csv`) untuk menghasilkan proyeksi penjualan per kategori produk menggunakan **Model Hibrida Facebook Prophet + LightGBM**.
